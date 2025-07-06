@@ -98,9 +98,15 @@ fn create_lead_worker_from_env(
         .get_param::<usize>("GOOSE_LEAD_FALLBACK_TURNS")
         .unwrap_or(default_fallback_turns());
 
-    // Create model configs
-    let lead_model_config = ModelConfig::new(lead_model_name.to_string());
-    let worker_model_config = default_model.clone();
+    // Create model configs with context limit environment variable support
+    let lead_model_config = ModelConfig::new_with_context_env(
+        lead_model_name.to_string(),
+        Some("GOOSE_LEAD_CONTEXT_LIMIT")
+    );
+    let worker_model_config = ModelConfig::new_with_context_env(
+        default_model.model_name.clone(),
+        Some("GOOSE_WORKER_CONTEXT_LIMIT")
+    );
 
     // Create the providers
     let lead_provider = create_provider(&lead_provider_name, lead_model_config)?;
