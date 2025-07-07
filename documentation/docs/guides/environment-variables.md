@@ -119,7 +119,7 @@ export GOOSE_CONTEXT_STRATEGY=prompt
 
 ### Context Limit Configuration
 
-These variables allow you to override the default context window size (token limit) for your models. This is particularly useful when using LiteLLM proxies or custom models that don't match Goose's predefined model patterns.
+These variables allow you to override the default context window size (token limit) for your models. This is particularly useful when using [LiteLLM proxies](https://docs.litellm.ai/docs/providers/litellm_proxy) or custom models that don't match Goose's predefined model patterns.
 
 | Variable | Purpose | Values | Default |
 |----------|---------|---------|---------|
