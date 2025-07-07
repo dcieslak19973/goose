@@ -101,9 +101,9 @@ fn create_lead_worker_from_env(
     // Create model configs with context limit environment variable support
     let lead_model_config = ModelConfig::new_with_context_env(
         lead_model_name.to_string(),
-        Some("GOOSE_LEAD_CONTEXT_LIMIT")
+        Some("GOOSE_LEAD_CONTEXT_LIMIT"),
     );
-    
+
     // For worker model, preserve the original context_limit from config (highest precedence)
     // while still allowing environment variable overrides
     let worker_model_config = {
@@ -114,10 +114,10 @@ fn create_lead_worker_from_env(
             .with_max_tokens(default_model.max_tokens)
             .with_toolshim(default_model.toolshim)
             .with_toolshim_model(default_model.toolshim_model.clone());
-        
+
         // Apply environment variable overrides with proper precedence
         let global_config = crate::config::Config::global();
-        
+
         // Check for worker-specific context limit
         if let Ok(limit_str) = global_config.get_param::<String>("GOOSE_WORKER_CONTEXT_LIMIT") {
             if let Ok(limit) = limit_str.parse::<usize>() {
@@ -129,7 +129,7 @@ fn create_lead_worker_from_env(
                 worker_config = worker_config.with_context_limit(Some(limit));
             }
         }
-        
+
         worker_config
     };
 
@@ -386,11 +386,14 @@ mod tests {
     #[test]
     fn test_worker_model_preserves_original_context_limit() {
         use std::env;
-        
+
         // Save current env vars
         let saved_vars = [
             ("GOOSE_LEAD_MODEL", env::var("GOOSE_LEAD_MODEL").ok()),
-            ("GOOSE_WORKER_CONTEXT_LIMIT", env::var("GOOSE_WORKER_CONTEXT_LIMIT").ok()),
+            (
+                "GOOSE_WORKER_CONTEXT_LIMIT",
+                env::var("GOOSE_WORKER_CONTEXT_LIMIT").ok(),
+            ),
             ("GOOSE_CONTEXT_LIMIT", env::var("GOOSE_CONTEXT_LIMIT").ok()),
         ];
 
@@ -403,17 +406,17 @@ mod tests {
         env::set_var("GOOSE_LEAD_MODEL", "gpt-4o");
 
         // Create a default model with explicit context_limit
-        let default_model = ModelConfig::new("gpt-3.5-turbo".to_string())
-            .with_context_limit(Some(16_000));
+        let default_model =
+            ModelConfig::new("gpt-3.5-turbo".to_string()).with_context_limit(Some(16_000));
 
         // Test case 1: No environment variables - should preserve original context_limit
         let result = create_lead_worker_from_env("openai", &default_model, "gpt-4o");
-        
+
         // Test case 2: With GOOSE_WORKER_CONTEXT_LIMIT - should override original
         env::set_var("GOOSE_WORKER_CONTEXT_LIMIT", "32000");
         let _result = create_lead_worker_from_env("openai", &default_model, "gpt-4o");
         env::remove_var("GOOSE_WORKER_CONTEXT_LIMIT");
-        
+
         // Test case 3: With GOOSE_CONTEXT_LIMIT - should override original
         env::set_var("GOOSE_CONTEXT_LIMIT", "64000");
         let _result = create_lead_worker_from_env("openai", &default_model, "gpt-4o");
@@ -426,7 +429,7 @@ mod tests {
                 None => env::remove_var(key),
             }
         }
-        
+
         // The main verification is that the function doesn't panic and handles
         // the context limit preservation logic correctly. More detailed testing
         // would require mocking the provider creation.
